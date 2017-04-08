@@ -17,7 +17,7 @@ def tokenize(code):
     token_specification = [
         ('NUMBER',   r'\d+(\.\d*)?'),
         ('ID',       r'[A-Za-z_][A-Za-z0-9_]*'),
-        ('OPER',     r'[-+*/=<>?!:]+'),
+        ('OPER',     r'[-~+*/%=<>?!:|&^]+'),
         ('SYNT',     r'[][(),.]'),
         ('SKIP',     r'[ \t]+'),
         ('MISMATCH', r'.'),
@@ -63,9 +63,14 @@ class OperatorDesc:
         return '<Oper {} {}/{}>'.format(self.oper, self.lprio, self.rprio)
 
 
-def unary_builder(parser):
+def prefix_unary_builder(parser):
     oper = parser.operators_stack.pop()
     parser.values_stack.append(CompositeNode(oper.oper, [parser.values_stack.pop()]))
+
+
+def postfix_unary_builder(parser):
+    oper = parser.operators_stack.pop()
+    parser.values_stack.append(CompositeNode('post'+oper.oper, [parser.values_stack.pop()]))
 
 
 def binary_builder(parser):
@@ -89,7 +94,7 @@ class Parser:
 
     def register_prefix_operator(self, oper, rprio, builder=None):
         if builder is None:
-            builder = unary_builder
+            builder = prefix_unary_builder
         if type(oper) is str:
             self.prefix_operators[oper] = OperatorDesc(oper, -1, rprio, builder)
         else:
@@ -107,7 +112,7 @@ class Parser:
 
     def register_postfix_operator(self, oper, lprio, builder=None):
         if builder is None:
-            builder = unary_builder
+            builder = postfix_unary_builder
         if type(oper) is str:
             self.postfix_operators[oper] = OperatorDesc(oper, lprio, 1000, builder)
         else:
@@ -191,7 +196,11 @@ def postfix_close_parenthesis(parser):
     if op2.builder == infix_open_parenthesis:
         val1 = parser.values_stack.pop()
         val2 = parser.values_stack.pop()
-        parser.values_stack.append(CompositeNode('CALL', [val2, val1]))
+        if type(val1) == CompositeNode and val1.token == ',':
+            args = [val2] + val1.children
+        else:
+            args = [val2, val1]
+        parser.values_stack.append(CompositeNode('call', args))
 
 
 def infix_question(parser):
@@ -208,31 +217,66 @@ def infix_colon(parser):
     val1 = parser.values_stack.pop()
     val2 = parser.values_stack.pop()
     val3 = parser.values_stack.pop()
-    parser.values_stack.append(CompositeNode('?:', [val3, val2, val1]))
+    parser.values_stack.append(CompositeNode('?', [val3, val2, val1]))
 
 
-def main(args):
+def infix_open_brackets(parser):
+    parser.dump()
+    raise RuntimeError('Unclosed open bracket')
+
+
+def postfix_close_brackets(parser):
+    op1 = parser.operators_stack.pop()
+    op2 = parser.operators_stack.pop()
+    if op2.oper != '[' or op2.builder != infix_open_brackets:
+        parser.dump()
+        raise RuntimeError('Unopened close bracket')
+    val1 = parser.values_stack.pop()
+    val2 = parser.values_stack.pop()
+    parser.values_stack.append(CompositeNode('get', [val2, val1]))
+
+
+def coma_builder(parser):
+    oper = parser.operators_stack.pop()
+    val2 = parser.values_stack.pop()
+    val1 = parser.values_stack.pop()
+    if type(val1) is CompositeNode and val1.token == ',':
+        val1.children.append(val2)
+        parser.values_stack.append(val1)
+    else:
+        parser.values_stack.append(CompositeNode(oper.oper, [val1, val2]))
+
+
+def cexp_parser():
     parser = Parser()
     parser.register_prefix_operator('(', 0, prefix_open_parenthesis)
     parser.register_postfix_operator(')', 1, postfix_close_parenthesis)
     parser.register_prefix_operator(')', 1, prefix_close_parenthesis)
-    parser.register_infix_operator(',', 2, 2)
-    parser.register_infix_operator(['=', '*=', '/=', '%=', '+=', '-=', '<<=', '>>=', '&=', '|='], 4, 3)
-    parser.register_infix_operator('?', 5, 0, infix_question)
+    parser.register_postfix_operator(']', 1, postfix_close_brackets)
+    parser.register_infix_operator(',', 2, 2, coma_builder)
+    parser.register_infix_operator(['=', '*=', '/=', '%=', '+=', '-=', '<<=', '>>=', '&=', '|=', '^='], 4, 3)
+    parser.register_infix_operator('?', 6, 0, infix_question)
     parser.register_infix_operator(':', 1, 5, infix_colon)
-    parser.register_infix_operator('||', 6, 6)
-    parser.register_infix_operator('&&', 7, 7)
-    parser.register_infix_operator('|', 8, 8)
-    parser.register_infix_operator('^', 9, 9)
-    parser.register_infix_operator('&', 10, 10)
-    parser.register_infix_operator(['==', '!='], 11, 11)
-    parser.register_infix_operator(['<', '>', '<=', '>='], 12, 12)
-    parser.register_infix_operator(['<<', '>>'], 13, 13)
-    parser.register_infix_operator(['+', '-'], 14, 14)
-    parser.register_infix_operator(['*', '/', '%'], 15, 15)
-    parser.register_prefix_operator(['+', '-', '++', '--', '&', '*', '~', '!'], 16)
-    parser.register_postfix_operator(['++', '--', '.', '->'], 17)
-    parser.register_infix_operator('(', 17, 0, infix_open_parenthesis)
+    parser.register_infix_operator('||', 8, 8)
+    parser.register_infix_operator('&&', 10, 10)
+    parser.register_infix_operator('|', 12, 12)
+    parser.register_infix_operator('^', 14, 14)
+    parser.register_infix_operator('&', 16, 16)
+    parser.register_infix_operator(['==', '!='], 18, 18)
+    parser.register_infix_operator(['<', '>', '<=', '>='], 20, 20)
+    parser.register_infix_operator(['<<', '>>'], 22, 22)
+    parser.register_infix_operator(['+', '-'], 24, 24)
+    parser.register_infix_operator(['*', '/', '%'], 26, 26)
+    parser.register_infix_operator('**', 28, 27)
+    parser.register_prefix_operator(['+', '-', '++', '--', '&', '*', '~', '!'], 30)
+    parser.register_postfix_operator(['++', '--', '.', '->'], 32)
+    parser.register_infix_operator('(', 32, 0, infix_open_parenthesis)
+    parser.register_infix_operator('[', 32, 0, infix_open_brackets)
+    return parser
+
+
+def main(args):
+    parser = cexp_parser()
     for s in args[1:]:
         try:
             exp = parser.parse(s)
