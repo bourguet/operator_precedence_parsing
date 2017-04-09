@@ -143,8 +143,9 @@ def check(s, expected):
         print('Failed: {} => {} != {}'.format(s, sexpr, expected))
 
 
-def self_tests():
+def basic_tests():
     check('a', 'a')
+    check('~a * b', '(* (~ a) b)')
     check('a+b', '(+ a b)')
     check('a+b+c', '(+ (+ a b) c)')
     check('a+b*c', '(+ a (* b c))')
@@ -155,6 +156,16 @@ def self_tests():
     check('a[b]', '(index a b)')
     check('a(b, c)', '(call a (, b c))')
     check('a[b, c]', '(index a (, b c))')
+
+
+def bad_error_detection():
+    check('a b +', '(+ a b)')
+    check('a b c [ , ]', '(index a (, b c))')
+
+def self_tests():
+    basic_tests()
+    bad_error_detection()
+
 
 def main(args):
     if len(args) == 1:
