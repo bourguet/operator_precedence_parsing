@@ -1,55 +1,8 @@
 #! /usr/bin/env python3
 
-import re
 import sys
-
-
-class Token:
-    def __init__(self, kind, lexem):
-        self.kind = kind
-        self.lexem = lexem
-
-    def __repr__(self):
-        return '<Token {} \'{}\'>'.format(self.kind, self.lexem)
-
-
-def tokenize(code):
-    token_specification = [
-        ('NUMBER',   r'\d+(\.\d*)?'),
-        ('ID',       r'[A-Za-z_][A-Za-z0-9_]*'),
-        ('OPER',     r'[-~+*/%=<>?!:|&^]+'),
-        ('SYNT',     r'[][(),.]'),
-        ('SKIP',     r'[ \t]+'),
-        ('MISMATCH', r'.'),
-    ]
-    tok_regex = '|'.join('(?P<%s>%s)' % pair for pair in token_specification)
-    for mo in re.finditer(tok_regex, code):
-        kind = mo.lastgroup
-        value = mo.group(kind)
-        if kind == 'SKIP':
-            pass
-        elif kind == 'MISMATCH':
-            raise RuntimeError('{} unexpected'.format(value))
-        else:
-            yield Token(kind, value)
-
-
-class Node:
-    def __init__(self, token):
-        self.token = token
-
-    def __repr__(self):
-        return self.token.lexem
-
-
-class CompositeNode(Node):
-    def __init__(self, token, children):
-        Node.__init__(self, token)
-        self.children = children
-
-    def __repr__(self):
-        args = ''.join([" " + repr(c) for c in self.children])
-        return '(' + self.token + args + ')'
+import lexer
+from tree import Node, CompositeNode
 
 
 class OperatorDesc:
@@ -147,7 +100,7 @@ class Parser:
 
     def parse(self, s):
         self.reset()
-        for tk in tokenize(s):
+        for tk in lexer.tokenize(s):
             if self.waiting_value:
                 self.parse_for_value(tk)
             else:
