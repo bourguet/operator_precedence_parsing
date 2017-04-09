@@ -120,6 +120,16 @@ def TestFuncCalls(t_parse):
     t_parse('c = pal[i*8]', '(= c (get pal (* i 8)))')
 
 
+def TestJMB(t_parse):
+    t_parse('a()', '(call a)')
+    t_parse('a(+1)', '(call a (+ 1))')
+    t_parse('a()+1', '(+ (call a) 1)')
+    t_parse('a, b, c', '(, a b c)')
+    t_parse('(a, b, c)', '(, a b c)')
+    t_parse('f(a, b, c)', '(call f a b c)')
+    t_parse('f(a, b, c), d', '(, (call f a b c) d)')
+    t_parse('(a, b, c), d', '(, (, a b c) d)')
+
 def check_parsing(s, expected):
     p = parser.cexp_parser()
     tree = p.parse(s)
@@ -134,3 +144,5 @@ TestUnary(check_parsing)
 TestArrays(check_parsing)
 TestComma(check_parsing)
 TestFuncCalls(check_parsing)
+
+TestJMB(check_parsing)
