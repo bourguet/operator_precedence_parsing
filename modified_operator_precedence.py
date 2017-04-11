@@ -16,9 +16,11 @@ class SymbolDesc:
         return '<Symbol {} {}/{}>'.format(self.symbol, self.lprio, self.rprio)
 
 
-def identity_evaluator(tk):
-    return Node(tk[0].symbol)
-
+def identity_evaluator(args):
+    if len(args) == 1 and type(args[0]) == SymbolDesc:
+        return Node(args[0].symbol)
+    else:
+        return CompositeNode('ID ERROR', args)
 
 def binary_evaluator(args):
     if len(args) != 3 or type(args[0]) == SymbolDesc or type(args[1]) != SymbolDesc or type(args[2]) == SymbolDesc:
