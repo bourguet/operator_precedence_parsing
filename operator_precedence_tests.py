@@ -13,4 +13,4 @@ def check_parsing(s, expected):
         print('Failed: {} => {} != {}'.format(s, sexpr, expected))
 
 andychu_cexp_tests.all(check_parsing)
-jmb_cexp_tests.all(check_parsing)
+jmb_cexp_tests.all_tests(check_parsing)

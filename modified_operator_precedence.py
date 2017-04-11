@@ -11,10 +11,9 @@ class SymbolDesc:
         self.lprio = lprio
         self.rprio = rprio
         self.evaluator = evaluator
-        self.value = None
 
     def __repr__(self):
-        return '<Symbol {} {}/{}: {}>'.format(self.symbol, self.lprio, self.rprio, self.value)
+        return '<Symbol {} {}/{}>'.format(self.symbol, self.lprio, self.rprio)
 
 
 def identity_evaluator(tk):
@@ -29,22 +28,34 @@ def binary_evaluator(args):
 
 class Parser:
     def __init__(self):
-        self.symbols = {}
-        self.symbols['$soi$'] = SymbolDesc('$soi$', 0, 0, None)
-        self.symbols['$eoi$'] = SymbolDesc('$eoi$', 0, 0, None)
+        self.presymbols = {}
+        self.presymbols['$soi$'] = SymbolDesc('$soi$', 0, 0, None)
+        self.presymbols['$eoi$'] = SymbolDesc('$eoi$', 0, 0, None)
+        self.postsymbols = {}
+        self.postsymbols['$soi$'] = SymbolDesc('$soi$', 0, 0, None)
+        self.postsymbols['$eoi$'] = SymbolDesc('$eoi$', 0, 0, None)
         self.reset()
 
-    def register_symbol(self, oper, lprio, rprio, evaluator=None):
+    def register_presymbol(self, oper, lprio, rprio, evaluator=None):
+        if evaluator is None:
+            evaluator = unary_evaluator
+        if type(oper) is str:
+            self.presymbols[oper] = SymbolDesc(oper, lprio, rprio, evaluator)
+        else:
+            for op in oper:
+                self.presymbols[op] = SymbolDesc(op, lprio, rprio, evaluator)
+
+    def register_postsymbol(self, oper, lprio, rprio, evaluator=None):
         if evaluator is None:
             evaluator = binary_evaluator
         if type(oper) is str:
-            self.symbols[oper] = SymbolDesc(oper, lprio, rprio, evaluator)
+            self.postsymbols[oper] = SymbolDesc(oper, lprio, rprio, evaluator)
         else:
             for op in oper:
-                self.symbols[op] = SymbolDesc(op, lprio, rprio, evaluator)
+                self.postsymbols[op] = SymbolDesc(op, lprio, rprio, evaluator)
 
     def reset(self):
-        self.stack = [self.symbols['$soi$']]
+        self.stack = [self.presymbols['$soi$']]
 
     def id_symbol(self, id):
         return SymbolDesc(id, 1000, 1000, identity_evaluator)
@@ -72,25 +83,42 @@ class Parser:
             idx -= 1
         return self.stack[idx]
 
-    def shift(self, sym):
+    def shift(self, presym, postsym):
+        if type(self.stack[-1]) == SymbolDesc:
+            sym = presym
+        else:
+            sym = postsym
         while self.tos_symbol().rprio > sym.lprio:
             self.evaluate()
+            sym = postsym
         self.stack.append(sym)
 
     def push_eoi(self):
-        self.shift(self.symbols['$eoi$'])
+        self.shift(self.presymbols['$eoi$'], self.postsymbols['$eoi$'])
 
     def parse(self, s):
         self.reset()
         for tk in lexer.tokenize(s):
-            if tk.lexem in self.symbols:
-                self.shift(self.symbols[tk.lexem])
-            elif tk.kind == 'ID':
-                self.shift(self.id_symbol(tk))
+            if tk.kind == 'ID':
+                self.shift(self.id_symbol(tk), self.id_symbol(tk))
             elif tk.kind == 'NUMBER':
-                self.shift(self.id_symbol(tk))
+                self.shift(self.id_symbol(tk), self.id_symbol(tk))
+
             else:
-                raise RuntimeError('Unexpected symbol: {}'.format(tk))
+                presym = None
+                postsym = None
+                if tk.lexem in self.presymbols:
+                    presym = self.presymbols[tk.lexem]
+                if tk.lexem in self.postsymbols:
+                    postsym = self.postsymbols[tk.lexem]
+                else:
+                    postsym = presym
+                if presym is None:
+                    presym = postsym
+                if presym is not None:
+                    self.shift(presym, postsym)
+                else:
+                    raise RuntimeError('Unexpected symbol: {}'.format(tk))
         self.push_eoi()
         if len(self.stack) != 3:
             raise RuntimeError('Internal error: bad state of stack at end')
@@ -133,7 +161,14 @@ def close_parenthesis_evaluator(args):
 
 
 def open_bracket_evaluator(args):
-    return CompositeNode('get', [args[0], args[2]])
+    if (len(args) == 4
+        and type(args[0]) != SymbolDesc
+        and type(args[1]) == SymbolDesc and args[1].symbol == '['
+        and type(args[2]) != SymbolDesc
+        and type(args[3]) == SymbolDesc and args[3].symbol == ']'):
+        return CompositeNode('get', [args[0], args[2]])
+    else:
+        return CompositeNode('[ ERROR', args)
 
 
 def close_bracket_evaluator(args):
@@ -190,28 +225,29 @@ def colon_evaluator(args):
 
 def cexp_parser():
     parser = Parser()
-    parser.register_symbol(',', 2, 2, coma_evaluator)
-    parser.register_symbol(['=', '*=', '/=', '%=', '+=', '-=', '<<=', '>>=', '&=', '|=', '^='], 5, 4)
-    parser.register_symbol('?', 7, 1.5, question_evaluator)
-    parser.register_symbol(':', 1.5, 6, colon_evaluator)
-    parser.register_symbol('||', 8, 9)
-    parser.register_symbol('&&', 10, 11)
-    parser.register_symbol('|', 12, 13)
-    parser.register_symbol('^', 14, 15)
-    parser.register_symbol('&', 16, 17, unary_or_binary_evaluator)
-    parser.register_symbol(['==', '!='], 18, 19)
-    parser.register_symbol(['<', '>', '<=', '>='], 20, 21)
-    parser.register_symbol(['<<', '>>'], 22, 23)
-    parser.register_symbol(['+', '-'], 24, 25, unary_or_binary_evaluator)
-    parser.register_symbol(['/', '%'], 26, 27)
-    parser.register_symbol(['*'], 26, 27, unary_or_binary_evaluator)
-    parser.register_symbol('**', 29, 28)
-    parser.register_symbol(['++', '--', '~', '!', '.', '->'], 31, 30, unary_evaluator)  # +, -, *, & should be here
-    parser.register_symbol('.', 30, 31)
-    parser.register_symbol('(', 100, 1, open_parenthesis_evaluator)
-    parser.register_symbol(')', 1, 100, close_parenthesis_evaluator)
-    parser.register_symbol('[', 100, 1, open_bracket_evaluator)
-    parser.register_symbol(']', 1, 100, close_bracket_evaluator)
+    parser.register_postsymbol(',', 2, 2, coma_evaluator)
+    parser.register_postsymbol(['=', '*=', '/=', '%=', '+=', '-=', '<<=', '>>=', '&=', '|=', '^='], 5, 4)
+    parser.register_postsymbol('?', 7, 1.5, question_evaluator)
+    parser.register_postsymbol(':', 1.5, 6, colon_evaluator)
+    parser.register_postsymbol('||', 8, 9)
+    parser.register_postsymbol('&&', 10, 11)
+    parser.register_postsymbol('|', 12, 13)
+    parser.register_postsymbol('^', 14, 15)
+    parser.register_postsymbol('&', 16, 17, unary_or_binary_evaluator)
+    parser.register_postsymbol(['==', '!='], 18, 19)
+    parser.register_postsymbol(['<', '>', '<=', '>='], 20, 21)
+    parser.register_postsymbol(['<<', '>>'], 22, 23)
+    parser.register_postsymbol(['+', '-'], 24, 25)
+    parser.register_postsymbol(['/', '%'], 26, 27)
+    parser.register_postsymbol(['*'], 26, 27, unary_or_binary_evaluator)
+    parser.register_postsymbol('**', 29, 28)
+    parser.register_presymbol(['+', '-', '++', '--', '~', '!'], 31, 30, unary_evaluator)
+    parser.register_postsymbol(['++', '--', '->'], 33, 32, unary_evaluator)
+    parser.register_postsymbol('.', 32, 33)
+    parser.register_postsymbol('(', 100, 1, open_parenthesis_evaluator)
+    parser.register_postsymbol(')', 1, 100, close_parenthesis_evaluator)
+    parser.register_postsymbol('[', 100, 1, open_bracket_evaluator)
+    parser.register_postsymbol(']', 1, 100, close_bracket_evaluator)
     return parser
 
 

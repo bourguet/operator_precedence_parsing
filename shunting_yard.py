@@ -252,7 +252,8 @@ def cexp_parser():
     parser.register_infix_operator(['*', '/', '%'], 26, 26)
     parser.register_infix_operator('**', 28, 27)
     parser.register_prefix_operator(['+', '-', '++', '--', '&', '*', '~', '!'], 30)
-    parser.register_postfix_operator(['++', '--', '.', '->'], 32)
+    parser.register_postfix_operator(['++', '--', '->'], 32)
+    parser.register_infix_operator('.', 32, 32)
     parser.register_infix_operator('(', 32, 0, infix_open_parenthesis)
     parser.register_infix_operator('[', 32, 0, infix_open_brackets)
     return parser
