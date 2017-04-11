@@ -16,6 +16,6 @@ accept strange things.
 
 ## References
 
-- [MR35]()
+- [MR35](http://www.cs.utexas.edu/~EWD/MCReps/MR35.PDF)
 - [Revised Report on the Algorithmic Language Algol 60](http://www.masswerk.at/algol60/report.htm)
 
