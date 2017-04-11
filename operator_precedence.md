@@ -11,5 +11,9 @@ it is able to parse is called the operator grammars and is characterized by
 Note that this algorithm is unable to handle unary operators which don't have the 
 same priority and associativity as the binary one, this lead to some parse which
 are different from the normal C one.  It also does not prevent the use of prefix
-unary operators as postfix one.  In general operator precedence allows more parse
-than wanted and need some additional checks.
+unary operators as postfix one, but as the associativity of pre and post operator
+should be different, it as issue with operators which are both pre and post fix.
+
+In general operator precedence allows more parse than wanted and need some
+additional checks to ensure that the syntax is correct.  This is aggravated
+by using left and right priority instead of the full precedence matrix.

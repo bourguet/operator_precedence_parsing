@@ -110,7 +110,8 @@ class Parser:
         elif tk.lexem in self.prefix_operators:
             self.push_operator(self.prefix_operators[tk.lexem])
         else:
-            raise RuntimeError('{} is not a prefix operator or a value'.format(tk.lexem))
+            self.values_stack.append(Node(lexer.Token('', 'ERROR')))
+            self.parse_for_operator(tk)
 
     def parse_for_operator(self, tk):
         if tk.lexem in self.postfix_actions:
@@ -121,7 +122,8 @@ class Parser:
             self.waiting_value = True
             self.push_operator(self.infix_operators[tk.lexem])
         else:
-            raise RuntimeError('{} is not a postfix or an infix operator'.format(tk.lexem))
+            val = self.values_stack.pop()
+            self.values_stack.append(CompositeNode('MISSING OPERATOR', [val, Node(tk)]))
 
     def parse(self, s):
         self.reset()
@@ -252,8 +254,8 @@ def cexp_parser():
     parser.register_infix_operator(['*', '/', '%'], 26, 26)
     parser.register_infix_operator('**', 28, 27)
     parser.register_prefix_operator(['+', '-', '++', '--', '&', '*', '~', '!'], 30)
-    parser.register_postfix_operator(['++', '--', '->'], 32)
-    parser.register_infix_operator('.', 32, 32)
+    parser.register_postfix_operator(['++', '--'], 32)
+    parser.register_infix_operator(['.', '->'], 32, 32)
     parser.register_infix_operator('(', 32, 0, infix_open_parenthesis)
     parser.register_infix_operator('[', 32, 0, infix_open_brackets)
     return parser

@@ -12,8 +12,13 @@ def reg_tests(t_parse):
     t_parse('(a, b, c), d', '(, (, a b c) d)')
     t_parse('- - a', '(- (- a))')
     t_parse('+ - a', '(+ (- a))')
+    t_parse('++ -- a', '(++ (-- a))')
+    t_parse('a ++ --', '(post-- (post++ a))')
     t_parse('a.b', '(. a b)')
     t_parse('a.b.c', '(. (. a b) c)')
+    t_parse('a->b', '(-> a b)')
+    t_parse('++a->b', '(++ (-> a b))')
+    t_parse('a++ ->b', '(-> (post++ a) b)')
 
 
 def oddities(t_parse):

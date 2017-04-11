@@ -209,8 +209,8 @@ def cexp_parser():
     parser.register_symbol(['/', '%'], 26, 27)
     parser.register_symbol(['*'], 26, 27, unary_or_binary_evaluator)
     parser.register_symbol('**', 29, 28)
-    parser.register_symbol(['++', '--', '~', '!', '.', '->'], 31, 30, unary_evaluator)  # +, -, *, & should be here
-    parser.register_symbol('.', 30, 31)
+    parser.register_symbol(['++', '--', '~', '!'], 31, 30, unary_evaluator)  # +, -, *, & should be here
+    parser.register_symbol(['.', '->'], 32, 33)
     parser.register_symbol('(', 100, 1, open_parenthesis_evaluator)
     parser.register_symbol(')', 1, 100, close_parenthesis_evaluator)
     parser.register_symbol('[', 100, 1, open_bracket_evaluator)

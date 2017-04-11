@@ -111,15 +111,18 @@ the paper in their 227-page
 [Annotated Bibliography](https://dickgrune.com/Books/PTAPG_2nd_Edition/CompleteList.pdf).
 
 - _The Theory of Parsing, Translation and Compiling, Volume 1: Parsing_ by A.V. Aho
-and J.D. Ullman.  And oldie (1972) but the more theoretical book I've looked at on
-the subject.  Operator precedence, simple precedence, weak precedence are
-considered as well as other techniques, everything considered in a grammar parsing
-context.
+  and J.D. Ullman.  And oldie (1972) but the more theoretical book I've looked at on
+  the subject.  Operator precedence, simple precedence, weak precedence are
+  considered as well as other techniques, everything considered in a grammar parsing
+  context.
  
 - _Parsing Techniques, A Practical Guide_ by D. Grune and C.J.H. Jacobs.  The more
   complete review of parsing techniques I know.
 
 - _Principle of Compiler Design_, A.V. Aho and J.D. Ullman.  The first dragon book.
+  Describe operator precedence and state that it is a useful method for hand written
+  parsers in conjunction with recursive descend.  Describe also simple and weak
+  precedence. 
  
 - _Compilers: Principles, Techniques and Tools_, A.V. Aho, R. Sethi and J.D. Ullman.
   The second dragon book.  Very similar description of precedence techniques than
@@ -129,7 +132,9 @@ context.
   R. Sethi and J.D. Ullman.  The third dragon book.  Seems to have dropped the
   description of operator precedence.
 
-- _Crafting a compiler_, C.N. Fisher and R.J. LeBlanc, Jr.  
+- _Crafting a compiler_, C.N. Fisher and R.J. LeBlanc, Jr.  Show a quick overview
+  of simple precedence and operator precedence, but does not consider them as anything
+  more than precursors of LR parsing.
 
 - _Making a translator for Algol 60_, E.W. Dijkstra, second part of M35 available at
   [http://www.cs.utexas.edu/~EWD/MCReps/MR35.PDF](http://www.cs.utexas.edu/~EWD/MCReps/MR35.PDF).
