@@ -21,6 +21,11 @@ Here are some parsers applying variant of operator precedence.
   operator precedence algorithm.  It adds the possibility to make the difference
   between prefix and postfix operators.
   
+- `recursive_operator_precedence.py` is a recursive implementation of
+  `modified_operator_precedence.py` and thus adds nothing new.  Its purpose is to be
+  compared with precedence climbing and Pratt algorithms (for which there is no
+  implementation here).
+  
 ## Relationships
 
 `dijkstra.py` and `shunting_yard.py` are strongly related.  The first is a style
@@ -42,7 +47,10 @@ to me: it can parses everything I wanted with less kludges than `shunting_yard.p
 I mean the presence of the `action` rules -- which is used to handle `f()` -- and the
 explicit manipulation of the parser states in the various evaluators -- especially when
 it comes to set `waiting_value`), and I'm more confident about the possibility to detect
-input errors.
+input errors.  `recursive_operator_precedence.py` is a recursive implementation of
+`modified_operator_precedence.py' and brings nothing new.  Well, it does not have to iterate
+the stack to find the handle, but that's something which could be done also in a non-recursive
+implementation.
 
 `knuth.py` shares the single stack characteristic with `operator_precedence.py', but in spirit
 is closer to `dijkstra.py` and `shunting_yard.py`.
@@ -98,8 +106,7 @@ all the arguments separated with the comas)
 ## References
 
 The first two books are monographies, the next four are text books
-targeted at students.  The last two are papers which have only an historical
-interest now but served as basis for `dijkstra.py` and `knuth.py`.
+targeted at students.
 
 Books tend to mention operator precedence, simple and weak precedence techniques
 which can be described in a the formal context of shift-reduce
@@ -144,6 +151,14 @@ the paper in their 227-page
   on Computer Languages_, 2003.  `knuth.py` aims to be an implementation of the
   algorithm described in Figure 4, _A version of the "modern" translation algorithm_.
 
+- _Top Down Operator Precedence_, Vaughan R. Pratt, 1973 available at
+  [http://tdop.github.io/](http://tdop.github.io/).  Original description of
+  Pratt's algorithm.
+  
+- _Pratt Parsing Index and Updates_, Andy Chu, blog post available at
+  [http://www.oilshell.org/blog/2017/03/31.html](http://www.oilshell.org/blog/2017/03/31.html),
+  the blog entry which triggered me into writing this.
+  
 ## Potential future work
 
 This style exercise already fulfilled more its goal.  I'll probably go back to other
@@ -154,13 +169,21 @@ future.
 
 - Fix bugs and clean up the parsers.
 
-- Implement recursive precedence parsers (precedence climbing, Pratt) in order to get
-  a better feel about how they are related to the one currently implemented.  I've the
-  impression -- but not yet backed up by such an experiment -- that they are "just"
-  replacing an explicit stack with the call stack of the implementation language.  That
-  probably makes them well suited to be integrated with a recursive descent parser for
-  the rest of the language if needed, included the possibility of switching back to
-  recursive descend for sub-expressions.
+- Implement recursive precedence parsers (precedence climbing, Pratt -- like Andy Chu
+  you may consider those two as equivalent) in order to get a better feel about how
+  they are related to the one currently implemented.  I had the mistaken impression
+  that they were "just" replacing an explicit stack with the call stack of the
+  implementation language.  That's probably not the case.  Look at
+  `recursive_operator_precedence.py` to see the difference.  Pratt and operator climbing
+  are really top down techniques (they call semantic actions as soon as possible, they
+  don't delay the call until the whole handle is seen).  My current view -- still to
+  be confirmed -- is that they are to LL parsing and recursive descent what operator
+  precedence is to LR and shift-reduce: they use a precedence relationship to simplify
+  the grammar description at the cost of producing a skeleton parse tree instead of a
+  full parse tree (they don't show unit rule application).  That cost is small: unit
+  rule are more noise than anything else in the context of expressions and are absent
+  of most if not all related AST.  That's probably what makes them well suited to be
+  integrated with a recursive descent parser for the rest of the language.
 
 - Maybe implementation of other historical description of precedence based algorithms
   if they seem to offer an interest.

@@ -30,7 +30,15 @@ def errors(t_parse):
     t_parse('x + a b', '')
     t_parse('x[a b]', '')
     t_parse('[a b]', '')
-
+    t_parse('+', '')
+    t_parse('<=', '')
+    t_parse('a b', '')
+    t_parse('a+b @', '')
+    t_parse('a+b )', '')
+    t_parse('(a+b', '')
+    t_parse('', '')
+    t_parse('@', '')
+    t_parse(')', '')
 
 def all_tests(t_parse):
     reg_tests(t_parse)

@@ -18,7 +18,7 @@ def tokenize(code):
     token_specification = [
         ('NUMBER',   r'\d+(\.\d*)?'),
         ('ID',       r'[A-Za-z_][A-Za-z0-9_]*'),
-        ('OPER',     r'[-~+*/%=<>?!:|&^]+'),
+        ('OPER',     r'[-~+*/%=<>?!:|&^@]+'),
         ('SYNT',     r'[][(),.]'),
         ('SKIP',     r'[ \t\n]+'),
         ('MISMATCH', r'.'),
