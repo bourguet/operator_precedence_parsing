@@ -33,11 +33,8 @@ class Parser:
     def __init__(self):
         self.presymbols = {}
         self.presymbols['$soi$'] = SymbolDesc('$soi$', 0, 0, None)
-        self.presymbols['$eoi$'] = SymbolDesc('$eoi$', 0, 0, None)
         self.postsymbols = {}
         self.postsymbols['$soi$'] = SymbolDesc('$soi$', 0, 0, None)
-        self.postsymbols['$eoi$'] = SymbolDesc('$eoi$', 0, 0, None)
-        self.reset()
 
     def register_presymbol(self, oper, lprio, rprio, evaluator=None):
         if evaluator is None:
@@ -57,11 +54,25 @@ class Parser:
             for op in oper:
                 self.postsymbols[op] = SymbolDesc(op, lprio, rprio, evaluator)
 
-    def reset(self):
+    def advance(self):
+        try:
+            self.cur_token = self.lexer.__next__()
+        except StopIteration:
+            self.cur_token = None
+
+    def reset(self, s):
+        self.lexer = lexer.tokenize(s)
+        self.advance()
         self.stack = [self.presymbols['$soi$']]
 
     def id_symbol(self, id):
-        return SymbolDesc(id, 1000, 1000, identity_evaluator)
+        return SymbolDesc(id, 999, 1000, identity_evaluator)
+
+    def evaluate_handle(self, args):
+        for i in args:
+            if type(i) == SymbolDesc:
+                return i.evaluator(args)
+        raise RuntimeError('Internal error: no evaluator found in {}'.format(args))
 
     def evaluate(self):
         idx = len(self.stack)-1
@@ -73,67 +84,49 @@ class Parser:
             if type(self.stack[idx]) == SymbolDesc:
                 curprio = self.stack[idx].lprio
         args = self.stack[idx:]
-        self.stack = self.stack[:idx]
-        for i in args:
-            if type(i) == SymbolDesc:
-                self.stack.append(i.evaluator(args))
-                return
-        raise RuntimeError('Internal error: no evaluator found in {}'.format(args))
+        self.stack[idx:] = []
+        self.stack.append(self.evaluate_handle(args))
 
     def tos_symbol(self):
         idx = len(self.stack)-1
-        if type(self.stack[idx]) != SymbolDesc:
+        while type(self.stack[idx]) != SymbolDesc:
             idx -= 1
         return self.stack[idx]
 
-    def shift(self, presym, postsym):
-        if presym is not None and type(self.stack[-1]) == SymbolDesc:
-            sym = presym
+    def cur_sym(self, allow_presymbol):
+        if self.cur_token is None:
+            return None
+        elif self.cur_token.kind == 'ID':
+            return self.id_symbol(self.cur_token)
+        elif self.cur_token.kind == 'NUMBER':
+            return self.id_symbol(self.cur_token)
+        elif allow_presymbol and self.cur_token.lexem in self.presymbols:
+            return self.presymbols[self.cur_token.lexem]
+        elif self.cur_token.lexem in self.postsymbols:
+            return self.postsymbols[self.cur_token.lexem]
         else:
-            sym = postsym
-        while postsym is not None and self.tos_symbol().rprio > sym.lprio:
-            self.evaluate()
-            sym = postsym
-        self.stack.append(sym)
-
-    def push_eoi(self):
-        self.shift(self.presymbols['$eoi$'], self.postsymbols['$eoi$'])
+            return None
 
     def parse(self, s):
-        self.reset()
-        remaining_input = None
-        for tk in lexer.tokenize(s):
-            if tk.kind == 'ID':
-                self.shift(self.id_symbol(tk), self.id_symbol(tk))
-            elif tk.kind == 'NUMBER':
-                self.shift(self.id_symbol(tk), self.id_symbol(tk))
-            else:
-                presym = None
-                postsym = None
-                if tk.lexem in self.presymbols:
-                    presym = self.presymbols[tk.lexem]
-                if tk.lexem in self.postsymbols:
-                    postsym = self.postsymbols[tk.lexem]
-                if presym is not None or postsym is not None:
-                    self.shift(presym, postsym)
-                else:
-                    remaining_input = tk
-                    break
-        self.push_eoi()
-        if len(self.stack) == 2:
+        self.reset(s)
+        while True:
+            sym = self.cur_sym(type(self.stack[-1]) == SymbolDesc)
+            if sym is None:
+                break
+            while self.tos_symbol().rprio > sym.lprio:
+                self.evaluate()
+                sym = self.cur_sym(False)
+            self.stack.append(sym)
+            self.advance()
+        while len(self.stack) > 2 or (len(self.stack) == 2 and type(self.stack[-1]) == SymbolDesc):
+            self.evaluate()
+        if len(self.stack) == 1:
             res = None
-        elif len(self.stack) == 3:
+        elif len(self.stack) == 2:
             res = self.stack[1]
-        else:
-            res = CompositeNode('BAD STACK', self.stack)
-        if remaining_input is not None:
-            res = CompositeNode('REMAINING INPUT', [res, remaining_input])
+        if self.cur_token is not None:
+            res = CompositeNode('REMAINING INPUT', [res, self.cur_token])
         return res
-
-    def dump(self):
-        print('Stack')
-        for oper in self.stack:
-            print('   {}'.format(oper))
 
 
 def open_parenthesis_evaluator(args):

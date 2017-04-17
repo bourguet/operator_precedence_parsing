@@ -52,21 +52,29 @@ class Parser:
             for op in oper:
                 self.postsymbols[op] = SymbolDesc(op, lprio, rprio, evaluator)
 
-    def reset(self, s):
-        self.lexer = lexer.tokenize(s)
-        self.advance()
-
     def advance(self):
         try:
             self.cur_token = self.lexer.__next__()
         except StopIteration:
-            self.cur_token = lexer.Token('EOF', '$eoi$')
+            self.cur_token = None
+
+    def reset(self, s):
+        self.lexer = lexer.tokenize(s)
+        self.advance()
 
     def id_symbol(self, id):
-        return SymbolDesc(id, 1000, 1000, identity_evaluator)
+        return SymbolDesc(id, 999, 1000, identity_evaluator)
+
+    def evaluate_handle(self, args):
+        for i in args:
+            if type(i) == SymbolDesc:
+                return i.evaluator(args)
+        raise RuntimeError('Internal error: no evaluator found in {}'.format(args))
 
     def cur_sym(self, allow_presymbol):
-        if self.cur_token.kind == 'ID':
+        if self.cur_token is None:
+            return None
+        elif self.cur_token.kind == 'ID':
             return self.id_symbol(self.cur_token)
         elif self.cur_token.kind == 'NUMBER':
             return self.id_symbol(self.cur_token)
@@ -86,21 +94,15 @@ class Parser:
                 break
             while True:
                 args.append(sym)
-                curprio = sym.rprio
                 self.advance()
+                curprio = sym.rprio
                 next = self.parse_to(curprio)
                 if next is not None:
                     args.append(next)
                 sym = self.cur_sym(next is None)
                 if sym is None or curprio != sym.lprio:
                     break
-            for i in args:
-                if type(i) == SymbolDesc:
-                    args = [i.evaluator(args)]
-                    found = True
-                    break
-            if not found:
-                raise RuntimeError('Internal error: no evaluator found in {}'.format(args))
+            args = [self.evaluate_handle(args)]
         if len(args) == 1:
             return args[0]
         else:
@@ -109,7 +111,7 @@ class Parser:
     def parse(self, s):
         self.reset(s)
         res = self.parse_to(0)
-        if self.cur_token.kind != 'EOF':
+        if self.cur_token is not None:
             res = CompositeNode('REMAINING INPUT', [res, self.cur_token])
         return res
 
