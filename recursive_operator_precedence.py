@@ -113,11 +113,6 @@ class Parser:
             res = CompositeNode('REMAINING INPUT', [res, self.cur_token])
         return res
 
-    def dump(self):
-        print('Stack')
-        for oper in self.stack:
-            print('   {}'.format(oper))
-
 
 def open_parenthesis_evaluator(args):
     if (len(args) == 3
