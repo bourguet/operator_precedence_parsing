@@ -8,33 +8,33 @@ closely the description of the parsers in the literature (`dijkstra.py`, `knuth.
 (`shunting_yard.py`, `modified_operator_precedence.py`, `recursive_operator_precedence.py`
 and `pratt.py`).
 
-This work was triggered by Andy Chu [blog post](https://www.oilshell.org/blog/2017/03/31.html)
+This work was triggered by Andy Chu [blog posts](https://www.oilshell.org/blog/2017/03/31.html)
 and [repository](https://github.com/andychu/pratt-parsing-demo) on Pratt parsers.
-I first though that Pratt parser was a recursive implementation of operator precedence
-(it for sure was not a recursive implementation of shunthing yard as the major differenciation
-point of that algorithm is the use of two stacks). I was mistaken as it can be clearly
-see when comparing the `parse_to` method of both Pratt and recursive operator precedence
-here. Pratt is applying its evaluation function as soon as a symbol is recognized, the
-operator precedence is applying it when the whole expression has been recognized.  In other
-words, Pratt is in the LL class when operator precedence is in the LR class of parsing
-algorithms.
+I first though that Pratt parser was a recursive implementation of the shunting yard algorithm.
+That is retrospectively lacking of though clarity: the major characteristic of the shunting
+yard algorithm is the use of two stacks, one for operands, one for operators. Operator
+precedence was a better target for unification with Pratt.  Even replacing shunting yard by
+operator precedence,I was mistaken as it can be clearly see when comparing the `parse_to`
+method of both Pratt and recursive operator precedence here. Pratt is applying its evaluation
+function as soon as a symbol is recognized, operator precedence is applying it when the whole
+expression has been recognized.
 
 ## Overview
 
-Here are some parsers applying variant of operator precedence.
+Here is a small description of the expression parsers presented in this repository.
 
 - `dijkstra.py` is a implementation trying to follow Dijkstra's description of the
   shunting-yard algorithm.
   
-- `knuth.py` is an implementation of Knuth's "modern" translation algorithm of 1962
+- `knuth.py` is an implementation of Knuth's "modern" translation algorithm of 1962.
 
+- `operator_precedence.py` is a parser for C-like expressions using the operator
+  precedence algorithm as described in the literature.
+  
 - `shunting_yard.py` is a parser for C-like expressions using a modified shunting yard
   algorithm to improve error detection and add handling for things not handled by the
   Dijkstra one.  It is quite full featured (unary prefix and postfix, function calls,
   ternary operator).
-  
-- `operator_precedence.py` is a parser for C-like expressions using the operator
-  precedence algorithm as described in the literature.
   
 - `modified_operator_precedence.py` is a parser for C-like expressions using a modified
   operator precedence algorithm.  It adds the possibility to make the difference
@@ -42,16 +42,15 @@ Here are some parsers applying variant of operator precedence.
   
 - `recursive_operator_precedence.py` is a recursive implementation of
   `modified_operator_precedence.py` and adds no new features to it.  Its purpose is to be
-  compared with precedence climbing and Pratt algorithms (for which there is no
-  implementation here).
+  compared with Pratt algorithm.
 
 - `pratt.py` is an implementation of Pratt parser, also known as _Top Down Operator
-  Precedence_ which is the name used by Vaughan Pratt, or _Precedence Climbing_.  
+  Precedence_, which is the name used by Vaughan Pratt, or _Precedence Climbing_.
 
 - `pratt_tdop_parser.py` is an implementation of Pratt parser by Calin Barbat.  Since
-  then I wrote `pratt.py` which is closer in structure and naming convention to the
-  other parsers here and thus better suited for the purpose of this repository: comparing
-  the algorithms.
+  it was contributed I wrote `pratt.py` which is closer in structure and naming convention
+  to the other parsers here and thus better suited for the purpose of this repository:
+  comparing the algorithms.
    
 ## Relationships
 
