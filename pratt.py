@@ -17,7 +17,11 @@ class SymbolDesc:
 
 
 def prefix_error(parser, sym):
-    return CompositeNode('NOT VALID PREFIX ' + str(sym.symbol), [])
+    arg = parser.parse_to(sym.rprio)
+    if arg is None:
+        return CompositeNode('NOT VALID PREFIX ' + str(sym.symbol), [])
+    else:
+        return CompositeNode('NOT VALID PREFIX ' + str(sym.symbol), [arg])
 
 
 def postfix_error(parser, left_arg, sym):
@@ -31,7 +35,10 @@ def identity_evaluator(parser, sym):
 
 def unary_prefix_evaluator(parser, sym):
     arg = parser.parse_to(sym.rprio)
-    return CompositeNode(sym.symbol, [arg])
+    if arg is None:
+        return CompositeNode('MISSING ARG ' + str(sym.symbol), [])
+    else:
+        return CompositeNode(sym.symbol, [arg])
 
 
 def binary_evaluator(parser, left_arg, sym):
@@ -84,7 +91,7 @@ class Parser:
         elif self.cur_token.lexem in self.presymbols:
             return self.presymbols[self.cur_token.lexem]
         else:
-            return SymbolDesc(self.cur_token, None, 1000, prefix_error)
+            return SymbolDesc(self.cur_token.lexem, None, 1000, prefix_error)
 
     def postfix_sym(self):
         if self.cur_token is None:
@@ -96,7 +103,7 @@ class Parser:
         elif self.cur_token.lexem in self.postsymbols:
             return self.postsymbols[self.cur_token.lexem]
         else:
-            return SymbolDesc(self.cur_token, 999, 1000, postfix_error)
+            return SymbolDesc(self.cur_token.lexem, 0, 0, postfix_error)
 
     def parse_to(self, prio):
         sym = self.prefix_sym()
@@ -121,7 +128,7 @@ class Parser:
 
 
 def prefix_open_parenthesis_evaluator(parser, sym):
-    result = parser.parse_to(1)
+    result = parser.parse_to(sym.rprio)
     if parser.cur_token is not None and parser.cur_token.lexem == ')':
         parser.advance()
         return result
@@ -134,7 +141,7 @@ def postfix_open_parenthesis_evaluator(parser, left_arg, sym):
         parser.advance()
         return CompositeNode('call '+str(left_arg), [])
     else:
-        result = parser.parse_to(1)
+        result = parser.parse_to(sym.rprio)
         if parser.cur_token is not None and parser.cur_token.lexem == ')':
             parser.advance()
             if result.token == ',':
@@ -150,7 +157,7 @@ def postfix_close_parenthesis_evaluator(parser, left_arg, sym):
 
 
 def postfix_open_bracket_evaluator(parser, left_arg, sym):
-    result = parser.parse_to(1)
+    result = parser.parse_to(sym.rprio)
     if parser.cur_token is not None and parser.cur_token.lexem == ']':
         parser.advance()
         return CompositeNode('get ' + str(left_arg), [result])
@@ -165,7 +172,7 @@ def postfix_close_bracket_evaluator(parser, left_arg, sym):
 def coma_evaluator(parser, left_arg, sym):
     args = [left_arg]
     while True:
-        args.append(parser.parse_to(2))
+        args.append(parser.parse_to(sym.rprio))
         sym = parser.postfix_sym()
         if sym is None or sym.symbol != ',':
             break
@@ -174,10 +181,11 @@ def coma_evaluator(parser, left_arg, sym):
 
 
 def question_evaluator(parser, left_arg, sym):
-    true_exp = parser.parse_to(1)
-    if parser.cur_token is not None and parser.cur_token.lexem == ':':
+    true_exp = parser.parse_to(sym.rprio)
+    sym = parser.postfix_sym()
+    if sym is not None and sym.symbol == ':':
         parser.advance()
-        false_exp = parser.parse_to(6)
+        false_exp = parser.parse_to(sym.rprio)
         return CompositeNode('?', [left_arg, true_exp, false_exp])
     else:
         return CompositeNode('? ERROR', [left_arg, true_exp])
