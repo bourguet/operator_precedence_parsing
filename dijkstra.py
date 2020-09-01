@@ -162,6 +162,7 @@ def bad_error_detection():
     check('a b +', '(+ a b)')
     check('a b c [ , ]', '(index a (, b c))')
 
+
 def self_tests():
     basic_tests()
     bad_error_detection()
@@ -178,6 +179,7 @@ def main(args):
                 print('{} -> {}'.format(s, exp))
             except RuntimeError as run_error:
                 print('Unable to parse {}: {}'.format(s, run_error))
+
 
 if __name__ == "__main__":
     main(sys.argv)

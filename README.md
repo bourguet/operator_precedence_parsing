@@ -1,5 +1,24 @@
 # Operator precedence parsers
 
+## Introduction
+
+This is a repository of expression parsers.  It contains implementations following
+closely the description of the parsers in the literature (`dijkstra.py`, `knuth.py` and
+`operator_precedence.py`) as well as variations featured enough to parse C expressions
+(`shunting_yard.py`, `modified_operator_precedence.py`, `recursive_operator_precedence.py`
+and `pratt.py`).
+
+This work was triggered by Andy Chu [blog post](https://www.oilshell.org/blog/2017/03/31.html)
+and [repository](https://github.com/andychu/pratt-parsing-demo) on Pratt parsers.
+I first though that Pratt parser was a recursive implementation of operator precedence
+(it for sure was not a recursive implementation of shunthing yard as the major differenciation
+point of that algorithm is the use of two stacks). I was mistaken as it can be clearly
+see when comparing the `parse_to` method of both Pratt and recursive operator precedence
+here. Pratt is applying its evaluation function as soon as a symbol is recognized, the
+operator precedence is applying it when the whole expression has been recognized.  In other
+words, Pratt is in the LL class when operator precedence is in the LR class of parsing
+algorithms.
+
 ## Overview
 
 Here are some parsers applying variant of operator precedence.
@@ -25,7 +44,15 @@ Here are some parsers applying variant of operator precedence.
   `modified_operator_precedence.py` and adds no new features to it.  Its purpose is to be
   compared with precedence climbing and Pratt algorithms (for which there is no
   implementation here).
-  
+
+- `pratt.py` is an implementation of Pratt parser, also known as _Top Down Operator
+  Precedence_ which is the name used by Vaughan Pratt, or _Precedence Climbing_.  
+
+- `pratt_tdop_parser.py` is an implementation of Pratt parser by Calin Barbat.  Since
+  then I wrote `pratt.py` which is closer in structure and naming convention to the
+  other parsers here and thus better suited for the purpose of this repository: comparing
+  the algorithms.
+   
 ## Relationships
 
 `dijkstra.py` and `shunting_yard.py` are strongly related.  The first is a style
@@ -181,7 +208,9 @@ future.
 
 Some things I'll probably not do:
 
-- implement precedence climbing and Pratt.  After reading Pratt's paper, I think that 
+- (well I did!, still keeping this until I move or rewrite all the relevant information)
+  implement precedence climbing and Pratt.  After reading Pratt's paper,
+  I think that 
   implementing them would not bring me something over what I got from understanding
   [Andy Chu's implementation](https://github.com/andychu/pratt-parsing-demo).  I had
   the mistaken impression that they were "just" replacing an explicit stack with the
