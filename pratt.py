@@ -6,48 +6,48 @@ from tree import Node, CompositeNode
 
 
 class SymbolDesc:
-    def __init__(self, symbol, lprio, rprio, evaluator):
-        self.symbol = symbol
+    def __init__(self, token, lprio, rprio, evaluator):
+        self.token = token
         self.lprio = lprio
         self.rprio = rprio
         self.evaluator = evaluator
 
     def __repr__(self):
-        return '<Symbol {} {}/{}>'.format(self.symbol, self.lprio, self.rprio)
+        return '<Symbol {} {}/{}>'.format(self.token.lexem, self.lprio, self.rprio)
 
 
 def prefix_error(parser, sym):
     arg = parser.parse_to(sym.rprio)
     if arg is None:
-        return CompositeNode('NOT VALID PREFIX ' + str(sym.symbol), [])
+        return CompositeNode('NOT VALID PREFIX ' + str(sym.token), [])
     else:
-        return CompositeNode('NOT VALID PREFIX ' + str(sym.symbol), [arg])
+        return CompositeNode('NOT VALID PREFIX ' + str(sym.token), [arg])
 
 
 def postfix_error(parser, left_arg, sym):
-    return CompositeNode('NOT VALID POSTFIX ' + str(sym.symbol), [left_arg])
+    return CompositeNode('NOT VALID POSTFIX ' + str(sym.token), [left_arg])
 
 
 def identity_evaluator(parser, sym):
-    result = Node(sym.symbol)
+    result = Node(sym.token)
     return result
 
 
 def unary_prefix_evaluator(parser, sym):
     arg = parser.parse_to(sym.rprio)
     if arg is None:
-        return CompositeNode('MISSING ARG ' + str(sym.symbol), [])
+        return CompositeNode('MISSING ARG ' + str(sym.token), [])
     else:
-        return CompositeNode(sym.symbol, [arg])
+        return CompositeNode(sym.token, [arg])
 
 
 def binary_evaluator(parser, left_arg, sym):
     right_arg = parser.parse_to(sym.rprio)
-    return CompositeNode(sym.symbol, [left_arg, right_arg])
+    return CompositeNode(sym.token, [left_arg, right_arg])
 
 
 def unary_postfix_evaluator(parser, left_arg, sym):
-    return CompositeNode('post'+sym.symbol, [left_arg])
+    return CompositeNode('post' + sym.token, [left_arg])
 
 
 class Parser:
@@ -85,25 +85,25 @@ class Parser:
         if self.cur_token is None:
             return None
         elif self.cur_token.kind == 'ID':
-            return SymbolDesc(self.cur_token, None, 1000, identity_evaluator)
+            return SymbolDesc(self.cur_token, None, None, identity_evaluator)
         elif self.cur_token.kind == 'NUMBER':
-            return SymbolDesc(self.cur_token, None, 1000, identity_evaluator)
+            return SymbolDesc(self.cur_token, None, None, identity_evaluator)
         elif self.cur_token.lexem in self.presymbols:
             return self.presymbols[self.cur_token.lexem]
         else:
-            return SymbolDesc(self.cur_token.lexem, None, 1000, prefix_error)
+            return SymbolDesc(self.cur_token, None, 1000, prefix_error)
 
     def postfix_sym(self):
         if self.cur_token is None:
             return None
         elif self.cur_token.kind == 'ID':
-            return SymbolDesc(self.cur_token, 999, 1000, postfix_error)
+            return SymbolDesc(self.cur_token, 0, 1000, postfix_error)
         elif self.cur_token.kind == 'NUMBER':
-            return SymbolDesc(self.cur_token, 999, 1000, postfix_error)
+            return SymbolDesc(self.cur_token, 0, 1000, postfix_error)
         elif self.cur_token.lexem in self.postsymbols:
             return self.postsymbols[self.cur_token.lexem]
         else:
-            return SymbolDesc(self.cur_token.lexem, 0, 0, postfix_error)
+            return SymbolDesc(self.cur_token, 0, 1000, postfix_error)
 
     def parse_to(self, prio):
         sym = self.prefix_sym()
@@ -174,7 +174,7 @@ def coma_evaluator(parser, left_arg, sym):
     while True:
         args.append(parser.parse_to(sym.rprio))
         sym = parser.postfix_sym()
-        if sym is None or sym.symbol != ',':
+        if sym is None or sym.token != ',':
             break
         parser.advance()
     return CompositeNode(',', args)
@@ -183,7 +183,7 @@ def coma_evaluator(parser, left_arg, sym):
 def question_evaluator(parser, left_arg, sym):
     true_exp = parser.parse_to(sym.rprio)
     sym = parser.postfix_sym()
-    if sym is not None and sym.symbol == ':':
+    if sym is not None and sym.token == ':':
         parser.advance()
         false_exp = parser.parse_to(sym.rprio)
         return CompositeNode('?', [left_arg, true_exp, false_exp])
