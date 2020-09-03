@@ -29,6 +29,8 @@ def oddities(t_parse):
 def errors(t_parse):
     t_parse('x + a b', '')
     t_parse('x[a b]', '')
+    t_parse('x[a)]', '')
+    t_parse('x(a])', '')
     t_parse('[a + b]', '')
     t_parse('[a b]', '')
     t_parse('+', '')
@@ -42,6 +44,7 @@ def errors(t_parse):
     t_parse('f ( a + b ) c', '')
     t_parse('@ a + b', '')
     t_parse('a @ b', '')
+    t_parse('(a @ b)', '')
     t_parse(')', '')
 
 
