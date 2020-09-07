@@ -16,18 +16,6 @@ class SymbolDesc:
         return '<Symbol {} {}/{}>'.format(self.token.lexem, self.lprio, self.rprio)
 
 
-def prefix_error(parser, sym):
-    arg = parser.parse_to(sym.rprio)
-    if arg is None:
-        return CompositeNode('NOT VALID PREFIX ' + str(sym.token), [])
-    else:
-        return CompositeNode('NOT VALID PREFIX ' + str(sym.token), [arg])
-
-
-def postfix_error(parser, left_arg, sym):
-    return CompositeNode('NOT VALID POSTFIX ' + str(sym.token), [left_arg])
-
-
 def identity_evaluator(parser, sym):
     result = Node(sym.token)
     return result

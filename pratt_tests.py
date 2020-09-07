@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
 
-import modified_pratt
+import pratt
 import andychu_cexp_tests
 import jmb_cexp_tests
 
 
 def check_parsing(s, expected):
-    p = modified_pratt.cexp_parser()
+    p = pratt.cexp_parser()
     tree = p.parse(s)
     sexpr = repr(tree)
     if sexpr != expected:
