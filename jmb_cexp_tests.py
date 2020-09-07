@@ -34,6 +34,7 @@ def errors(t_parse):
     t_parse('[a + b]', '')
     t_parse('[a b]', '')
     t_parse('+', '')
+    t_parse('a +', '')
     t_parse('<=', '')
     t_parse('<= - a + b', '')
     t_parse('a b', '')
