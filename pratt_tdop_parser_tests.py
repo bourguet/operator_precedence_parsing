@@ -6,14 +6,7 @@ import jmb_cexp_tests
 
 
 def check_parsing(s, expected):
-    p = pratt_tdop_parser.cexp_parser()
-    try:
-        tree = p.parse(s)
-        sexpr = repr(tree)
-        if sexpr != expected:
-            print('Failed: {} => {} != {}'.format(s, sexpr, expected))
-    except RuntimeError as run_error:
-        print("Unable to parse '{}': {}".format(s, run_error))
+    jmb_cexp_tests.check_parsing(pratt_tdop_parser.cexp_parser(), s, expected)
 
 
 andychu_cexp_tests.all(check_parsing)

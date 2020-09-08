@@ -6,20 +6,7 @@ import jmb_cexp_tests
 
 
 def check_parsing(s, expected):
-    p = shunting_yard.cexp_parser()
-    try:
-        tree = p.parse(s)
-        sexpr = repr(tree)
-        if sexpr != expected:
-            if expected == '':
-                print('Failing to parse: {} => {}'.format(s, sexpr))
-            else:
-                print('UNEXPECTED Failure to parse: {} => {} != {}'.format(s, sexpr, expected))
-    except RuntimeError as error:
-        if expected == '':
-            print('Exception while parsing {} => {}'.format(s, error))
-        else:
-            print('UNEXPECTED exception while parsing: {} => {}, expected {}'.format(s, error, expected))
+    jmb_cexp_tests.check_parsing(shunting_yard.cexp_parser(), s, expected)
 
 
 andychu_cexp_tests.all(check_parsing)
