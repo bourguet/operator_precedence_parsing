@@ -14,10 +14,12 @@ I first though that Pratt parser was a recursive implementation of the shunting 
 That is retrospectively lacking of though clarity: the major characteristic of the shunting
 yard algorithm is the use of two stacks, one for operands, one for operators. Operator
 precedence was a better target for unification with Pratt.  Even replacing shunting yard by
-operator precedence,I was mistaken as it can be clearly see when comparing the `parse_to`
+operator precedence, I was mistaken as it can be clearly see when comparing the `parse_to`
 method of both Pratt and recursive operator precedence here. Pratt is applying its evaluation
 function as soon as a symbol is recognized, operator precedence is applying it when the whole
-expression has been recognized.
+expression has been recognized. The series of parsers `rd_to_pratt_`_X_`.py` explores in
+another way the relationship between recursive descent and Pratt parser, I think showing
+clearly that they are related. 
 
 ## Overview
 
@@ -51,7 +53,11 @@ Here is a small description of the expression parsers presented in this reposito
   it was contributed I wrote `pratt.py` which is closer in structure and naming convention
   to the other parsers here and thus better suited for the purpose of this repository:
   comparing the algorithms.
-   
+  
+- the series `rd_to_pratt_`_X_`.py` is an exercise in refactoring a recursive descent parser
+  for a language having only binary operators into a Pratt parser. The critical step is
+  between `rd_to_pratt_3.py` and `rd_to_pratt_4.py`. Only `Parser.parse_exp` is modified.
+
 ## Relationships
 
 `dijkstra.py` and `shunting_yard.py` are strongly related.  The first is a style
