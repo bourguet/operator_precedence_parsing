@@ -189,24 +189,6 @@ def unary_evaluator(args):
         return CompositeNode('UNARY ERROR', args)
 
 
-def unary_or_binary_evaluator(args):
-    if (len(args) == 2
-            and type(args[0]) == SymbolDesc
-            and type(args[1]) != SymbolDesc):
-        return CompositeNode(args[0].symbol, [args[1]])
-    elif (len(args) == 2
-          and type(args[0]) != SymbolDesc
-          and type(args[1]) == SymbolDesc):
-        return CompositeNode('post'+args[1].symbol, [args[0]])
-    elif (len(args) == 3
-          and type(args[0]) != SymbolDesc
-          and type(args[1]) == SymbolDesc
-          and type(args[2]) != SymbolDesc):
-        return CompositeNode(args[1].symbol, [args[0], args[2]])
-    else:
-        return CompositeNode('1,2-ARY ERROR', args)
-
-
 def question_evaluator(args):
     if (len(args) != 5
             or type(args[0]) == SymbolDesc
